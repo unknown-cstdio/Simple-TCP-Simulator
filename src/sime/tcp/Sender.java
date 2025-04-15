@@ -40,7 +40,7 @@ import sime.TimerSimulated;
  */
 public abstract class Sender implements TimedComponent {
 	/** Maximum segment size, in bytes. Same for both sending/receiving endpoints. */
-	public static final int MSS = 536;
+	public static final int MSS = 1024;
 
 	/** Local endpoint that contains this sender object. */
 	Endpoint localEndpoint = null;

@@ -71,8 +71,6 @@ public class Router extends NetworkElement {
 	 * Current memory occupancy is represented by {@link #currentBufferOccupancy}.
 	 */
 	private	ArrayList<Packet> packetBuffer = null;
-	
-	private float packetLossRate = 0f;
 
 	/**
 	 * Constructor.
@@ -81,10 +79,9 @@ public class Router extends NetworkElement {
 	 * @param name_ the name given to this router
 	 * @param bufferSize_ the given buffer size for the router's memory (in bytes).
 	 */
-	public Router(Simulator simulator_, String name_, int bufferSize_, float packetLossRate_) {
+	public Router(Simulator simulator_, String name_, int bufferSize_) {
 		super(simulator_, name_);
 		this.bufferCapacity = bufferSize_;
-		this.packetLossRate = packetLossRate_;
 
 		// The list will NOT be allowed to grow once
 		// the sum of packet lengths reaches "maxBufferSize"
@@ -110,7 +107,7 @@ public class Router extends NetworkElement {
 	 */
 	public void addForwardingTableEntry(NetworkElement node_, Link outgoingLink_) {
 		// Create the output port that will be associated with the new outgoing link:
-		OutputPort outputPort_ = new OutputPort(outgoingLink_, this.packetLossRate);
+		OutputPort outputPort_ = new OutputPort(outgoingLink_);
 
 		// Calculate the maximum mismatch ratio for the new outgoing link:
 		outputPort_.updateMaxMismatchRatios(forwardingTable.values());
@@ -221,18 +218,14 @@ public class Router extends NetworkElement {
 		 * @see #handleIncomingPacket(NetworkElement, Packet)
 		 */
 		double mismatchCount = 0.0;
-		
-		float packetLossRate = 0f;
 
 		/**
 		 * Constructor for the inner class.
 		 * @param outgoingLink_ the outgoing link with which this output port will be associated
 		 */
-		OutputPort(Link outgoingLink_, float packetLossRate_) {
+		OutputPort(Link outgoingLink_) {
 			this.outgoingLink = outgoingLink_;
-			this.packetLossRate = packetLossRate_;
 		}
-		
 
 		/**
 		 * Handles an incoming packet that is heading out on this
@@ -330,10 +323,6 @@ public class Router extends NetworkElement {
 			Iterator<Packet> packetItems_ = packetBuffer.iterator();
 			while (packetItems_.hasNext() && transmitTimeBudget_ > 0.0) {
 				Packet packet_ = packetItems_.next();
-				double random = Math.random();
-				if (random <= this.packetLossRate) {
-					packet_.inError = true;
-				}
 				if (outgoingLink.equals(forwardingTable.get(packet_.destinationAddr))) {
 					// Hand over the packet to its outgoing link:
 					outgoingLink.send(Router.this, packet_);

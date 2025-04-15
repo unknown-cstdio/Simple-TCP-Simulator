@@ -91,7 +91,7 @@ public class Simulator {
 
 	/** Total data length to send (in bytes).
 	 * In reality, this data should be read from a file or another input stream. */
-	public static final int TOTAL_DATA_LENGTH = 10000000;
+	public static final int TOTAL_DATA_LENGTH = 1000000;
 
 	/** Two endpoints of the TCP connection that will be simulated. */
 	private Endpoint senderEndpt = null;
@@ -118,7 +118,6 @@ public class Simulator {
 	 * functional operation is called. See the design documentation for more details.
 	 * @see TimedComponent */
 	private	ArrayList<TimerSimulated> timers = new ArrayList<TimerSimulated>();
-	
 
 	/**
 	 * Constructor of  the simple TCP congestion control simulator.
@@ -130,8 +129,7 @@ public class Simulator {
 	 * @param bufferSize_ the memory size for the {@link Router} to queue incoming packets
 	 * @param rcvWindow_ the size of the receive buffer for the {@link sime.tcp.Receiver}
 	 */
-	public Simulator(String tcpSenderVersion_, int bufferSize_, int rcvWindow_, float packetLossRate_, double latency_) {
-		
+	public Simulator(String tcpSenderVersion_, int bufferSize_, int rcvWindow_) {
 		String tcpReceiverVersion_ = "Tahoe";	// irrelevant, since our receiver endpoint sends only ACKs, not data
 		System.out.println(
 			"================================================================\n" +
@@ -157,18 +155,18 @@ public class Simulator {
 			System.out.println(ex.toString());
 			return;
 		}
-		router = new Router(this, "router", bufferSize_, packetLossRate_);
+		router = new Router(this, "router", bufferSize_);
 
 		// The transmission time and propagation time for this link
 		// are set by default to zero (negligible compared to clock tick).
 		link1 = new Link(
 			this, "link1", senderEndpt, router,
-			latency_, /* transmission time as fraction of a clock tick */
+			0.001, /* transmission time as fraction of a clock tick */
 			0.001  /* propagation time as fraction of a clock tick */
 		);
 		link2 = new Link(	// all that matters is that t_x(Link2) = 10 * t_x(Link1)
 			this, "link2", receiverEndpt, router,
-			10*latency_, /* transmission time as fraction of a clock tick */
+			0.01, /* transmission time as fraction of a clock tick */
 			0.001 /* propagation time as fraction of a clock tick */
 		);
 
@@ -316,9 +314,9 @@ public class Simulator {
 	 * TCP sender (Tahoe/Reno/NewReno) and the number of iterations to run.
 	 */
 	public static void main(String[] argv_) {
-		if (argv_.length < 3) {
+		if (argv_.length < 2) {
 			System.err.println(
-				"Please specify the TCP sender version (Tahoe/Reno/NewReno), the number of iterations, and packet loss rate!"
+				"Please specify the TCP sender version (Tahoe/Reno/NewReno) and the number of iterations!"
 			);
 			System.exit(1);
 		}
@@ -332,7 +330,8 @@ public class Simulator {
 
 		// Create the simulator.
 		Simulator simulator = new Simulator(
-			argv_[0], bufferSize_ /* in number of packets */, rcvWindow_ /* in bytes */, Float.parseFloat(argv_[2]), 0.001);
+			argv_[0], bufferSize_ /* in number of packets */, rcvWindow_ /* in bytes */
+		);
 
 		// Extract the number of iterations (transmission rounds) to run
 		// from the command line argument.
